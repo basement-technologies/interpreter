@@ -1,4 +1,4 @@
-use douglang::{
+use dougterpreter::{
     Interpreter,
     parsing::Parser,
     values::tape::{LiteralHeader, Mutator, MutatorView, StickyImmixHeap},
