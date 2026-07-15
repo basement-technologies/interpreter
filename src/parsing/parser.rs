@@ -1,7 +1,4 @@
 use std::collections::VecDeque;
-#[cfg(not(feature = "xealia"))]
-use std::string::ParseError;
-
 use crate::interpreter::RuntimeError;
 use crate::parsing::lexer::*;
 use crate::values::Operator;
