@@ -5,3 +5,6 @@ edition = "2024"
 
 [dependencies]
 thiserror = "2.0.18"
+
+[features]
+xaelia = []

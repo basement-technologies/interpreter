@@ -1,4 +1,6 @@
 use std::collections::VecDeque;
+#[cfg(not(feature = "xealia"))]
+use std::string::ParseError;
 
 use crate::interpreter::RuntimeError;
 use crate::parsing::lexer::*;
@@ -105,6 +107,9 @@ pub enum SyntaxError {
 
     #[error("Breaking from expression tree")]
     BreakFromExprTree,
+
+    #[error("Feature (0) is not in dialect")]
+    WrongDialect(String),
 }
 
 pub struct Parser<'a> {
@@ -190,6 +195,7 @@ impl<'a> Parser<'a> {
         t
     }
 
+    #[allow(unused)]
     fn peek_two(&self) -> Option<Token> {
         self.tokens.get(1).cloned()
     }
@@ -251,6 +257,7 @@ impl<'a> Parser<'a> {
                         });
                     }
                 }
+                #[cfg(feature = "xaelia")]
                 Token::Paren(ParenThesis::AngleLeft) => {
                     let token2 = self.peek()?;
                     match token2 {
@@ -366,6 +373,7 @@ impl<'a> Parser<'a> {
                 Token::KeyWord(KeyWord::Break) => {
                     nodes.push(ASTNode::Break);
                 }
+                #[cfg(feature = "xaelia")]
                 Token::Variable(name) => {
                     let (value, op) = self.parse_set_expr()?;
                     nodes.push(ASTNode::Modify { name, value, op });
@@ -522,6 +530,7 @@ impl<'a> Parser<'a> {
             Err(_) => return Err(SyntaxError::BreakFromExprTree),
         };
 
+        #[cfg(feature = "xaelia")]
         let op = match self.peek() {
             Ok(Token::Operator(op)) => {
                 if let Some(Token::KeyWord(KeyWord::Set)) = self.peek_two() {
@@ -532,6 +541,19 @@ impl<'a> Parser<'a> {
                 }
             }
             _ => None,
+        };
+
+        #[cfg(not(feature = "xaelia"))]
+        let op = match self.peek() {
+            Ok(Token::Operator(Operator::Greater)) => Some(Operator::Greater),
+            Ok(Token::Operator(Operator::Less)) => Some(Operator::Less),
+            Ok(Token::Operator(Operator::LessEquals)) => Some(Operator::LessEquals),
+            Ok(Token::Operator(Operator::GreaterEquals)) => Some(Operator::GreaterEquals),
+            _ => {
+                return Err(SyntaxError::WrongDialect(
+                    "C-like expression parsing".to_string(),
+                ));
+            }
         };
 
         let Some(op) = op else {
