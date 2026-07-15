@@ -105,7 +105,7 @@ pub enum SyntaxError {
     #[error("Breaking from expression tree")]
     BreakFromExprTree,
 
-    #[error("Feature (0) is not in dialect")]
+    #[error("Feature {0} is not in dialect")]
     WrongDialect(String),
 }
 
