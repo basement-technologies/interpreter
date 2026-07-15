@@ -5,6 +5,10 @@ use crate::parsing::parser::*;
 use crate::values::Value;
 use crate::values::tape::{ArraySize, BuildFxHasher, Mutator, MutatorView, TaggedCellPtr};
 
+pub trait TtsEngine {
+    fn speak(&self, text: &str);
+}
+
 #[derive(Debug, Clone, Copy)]
 enum ControlFlow {
     Normal,
@@ -44,6 +48,7 @@ pub struct Interpreter<'a> {
     values_right: HashMap<ArraySize, TaggedCellPtr, BuildFxHasher>,
     values_left: HashMap<ArraySize, TaggedCellPtr, BuildFxHasher>,
     variables: HashMap<String, i32>,
+    tts: Option<Box<dyn TtsEngine>>,
 }
 
 impl<'a> Interpreter<'a> {
@@ -55,7 +60,12 @@ impl<'a> Interpreter<'a> {
             values_right: HashMap::with_hasher(BuildFxHasher {}),
             values_idx: 0,
             variables: HashMap::new(),
+            tts: None,
         }
+    }
+
+    pub fn set_tts(&mut self, engine: Box<dyn TtsEngine>) {
+        self.tts = Some(engine);
     }
 
     /// This function gets a [`value`] from an [`i`] in the tape.
@@ -217,7 +227,11 @@ impl<'a> Interpreter<'a> {
                     } else {
                         self.eval_expression(msg.as_ref().unwrap(), mem)?
                     };
-                    println!("{v}");
+                    let text = format!("{v}");
+                    println!("{text}");
+                    if let Some(ref engine) = self.tts {
+                        engine.speak(&text);
+                    }
                 }
 
                 ASTNode::Doug { chains, reset } => {
